@@ -1,5 +1,6 @@
 package com.jokerdev.katai.ui.screens
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -32,16 +33,54 @@ import com.jokerdev.katai.ui.components.AttachedPdfSection
 import com.jokerdev.katai.ui.components.ChatTopBar
 import com.jokerdev.katai.ui.components.MessageBubble
 import com.jokerdev.katai.viewmodel.ChatViewModel
+import android.provider.OpenableColumns
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.platform.LocalContext
 
+@SuppressLint("SuspiciousIndentation")
 @Composable
 fun ChatScreen(
     viewModel: ChatViewModel = viewModel()
 ) {
+    val context = LocalContext.current
+
+
+    val pdfPickerLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.GetContent()
+        ) { uri ->
+
+            uri?.let {
+
+                var pdfName = "Unknown PDF"
+
+                context.contentResolver.query(
+                    uri,
+                    null,
+                    null,
+                    null,
+                    null
+                )?.use { cursor ->
+
+                    val nameIndex =
+                        cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+
+                    if (cursor.moveToFirst() && nameIndex != -1) {
+
+                        pdfName =
+                            cursor.getString(nameIndex)
+                    }
+                }
+
+                viewModel.onPdfSelected(
+                    pdfName = pdfName,
+                    pdfUri = uri
+                )
+            }
+        }
 
     val uiState by viewModel.uiState.collectAsState()
-    var messageText by remember {
-        mutableStateOf("")
-    }
 
         Column(
             modifier = Modifier
@@ -49,13 +88,15 @@ fun ChatScreen(
                 .padding(horizontal = 12.dp)
         ) {
             AttachedPdfSection(
-                pdfs = listOf(
-                    "Database Notes.pdf"
-                ),
+                pdfs =
+                    uiState.selectedPdfName?.let {
+                        listOf(it)
+                    } ?: emptyList(),
                 onPdfClick = {
 
                 },
                 onAddPdfClick = {
+                    pdfPickerLauncher.launch("application/pdf")
 
                 }
             )
@@ -68,6 +109,14 @@ fun ChatScreen(
                 items(uiState.messages) { message ->
                     MessageBubble(message = message)
                 }
+            }
+
+            if (uiState.isLoading) {
+
+                Text(
+                    text = "Katai is thinking...",
+                    modifier = Modifier.padding(8.dp)
+                )
             }
 
             Row(
