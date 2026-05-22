@@ -1,6 +1,9 @@
 package com.jokerdev.katai.ui.screens
 
 import android.annotation.SuppressLint
+import android.provider.OpenableColumns
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,28 +18,19 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.jokerdev.katai.data.model.fakeMessages
 import com.jokerdev.katai.ui.components.AttachedPdfSection
-import com.jokerdev.katai.ui.components.ChatTopBar
 import com.jokerdev.katai.ui.components.MessageBubble
 import com.jokerdev.katai.viewmodel.ChatViewModel
-import android.provider.OpenableColumns
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.ui.platform.LocalContext
 
 @SuppressLint("SuspiciousIndentation")
 @Composable
@@ -67,15 +61,14 @@ fun ChatScreen(
                         cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
 
                     if (cursor.moveToFirst() && nameIndex != -1) {
-
                         pdfName =
                             cursor.getString(nameIndex)
                     }
                 }
-
                 viewModel.onPdfSelected(
                     pdfName = pdfName,
-                    pdfUri = uri
+                    pdfUri = uri,
+                    context = context
                 )
             }
         }
@@ -97,9 +90,18 @@ fun ChatScreen(
                 },
                 onAddPdfClick = {
                     pdfPickerLauncher.launch("application/pdf")
-
                 }
             )
+
+            if (uiState.extractedPdfText.isNotEmpty()) {
+
+                Text(
+                    text = uiState.extractedPdfText.take(5000),
+                    modifier = Modifier.padding(vertical = 8.dp),
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+
             LazyColumn(
                 modifier = Modifier
                     .weight(1f)

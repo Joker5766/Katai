@@ -15,11 +15,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.jokerdev.katai.ui.components.ChatTopBar
 import com.jokerdev.katai.ui.screens.ChatScreen
 import com.jokerdev.katai.ui.theme.KataiTheme
+import com.tom_roush.pdfbox.android.PDFBoxResourceLoader
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        PDFBoxResourceLoader.init(applicationContext)
         setContent {
             KataiTheme {
                 MainScreen()

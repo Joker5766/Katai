@@ -12,5 +12,7 @@ data class ChatUiState(
 
     val selectedPdfName: String? = null,
 
-    val selectedPdfUri: Uri? = null
+    val selectedPdfUri: Uri? = null,
+
+    val extractedPdfText: String = ""
 )

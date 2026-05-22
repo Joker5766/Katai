@@ -56,4 +56,9 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
+
+    implementation(libs.androidx.compose.material.icons.extended)
+
+    //PDF Box
+    implementation(libs.tom.roush.pdfbox.android)
 }

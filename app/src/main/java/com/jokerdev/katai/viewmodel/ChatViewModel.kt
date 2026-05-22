@@ -1,5 +1,6 @@
 package com.jokerdev.katai.viewmodel
 
+import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import com.jokerdev.katai.data.model.ChatMessage
@@ -8,10 +9,13 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import androidx.lifecycle.viewModelScope
+import com.jokerdev.katai.data.repository.PdfRepository
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class ChatViewModel: ViewModel() {
+
+    private val pdfRepository = PdfRepository()
     private val _uiState = MutableStateFlow(ChatUiState())
     val uiState: StateFlow<ChatUiState> = _uiState.asStateFlow()
 
@@ -67,6 +71,7 @@ class ChatViewModel: ViewModel() {
     }
 
     fun onPdfSelected(
+        context: Context,
         pdfName: String,
         pdfUri: Uri
     ) {
@@ -74,8 +79,22 @@ class ChatViewModel: ViewModel() {
         _uiState.value =
             _uiState.value.copy(
                 selectedPdfName = pdfName,
-                selectedPdfUri = pdfUri
+                selectedPdfUri = pdfUri,
+                isLoading = true
             )
+
+        viewModelScope.launch {
+            val extractedText =
+                pdfRepository.extractTextFromPdf(
+                    context = context,
+                    pdfUri = pdfUri
+                )
+            _uiState.value =
+                _uiState.value.copy(
+                    extractedPdfText = extractedText,
+                    isLoading = false
+                )
+        }
     }
 
 }
