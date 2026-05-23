@@ -1,7 +1,18 @@
+import java.util.Properties
+
 plugins {
+
+
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
 }
+
+val localProperties = Properties().apply {
+    load(rootProject.file("local.properties").inputStream())
+}
+
+val apiKey = localProperties.getProperty("GROQ_API_KEY")
+    ?: error("GROQ_API_KEY not found in local.properties")
 
 android {
     namespace = "com.jokerdev.katai"
@@ -23,7 +34,7 @@ android {
         buildConfigField(
             "String",
             "GROQ_API_KEY",
-            "\"${project.findProperty("GROQ_API_KEY")}\""
+            "\"$apiKey\""
         )
     }
 

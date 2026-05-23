@@ -1,5 +1,6 @@
 package com.jokerdev.katai.data.remote
 
+import android.util.Log
 import com.jokerdev.katai.data.remote.dto.GeminiRequest
 import com.jokerdev.katai.data.remote.dto.Message
 import com.jokerdev.katai.BuildConfig
@@ -34,6 +35,8 @@ $question
                 )
             )
         )
+        Log.d("API_KEY", BuildConfig.GROQ_API_KEY)
+        println(BuildConfig.GROQ_API_KEY)
 
         val response = api.generateContent(
             authorization = "Bearer ${BuildConfig.GROQ_API_KEY}",
