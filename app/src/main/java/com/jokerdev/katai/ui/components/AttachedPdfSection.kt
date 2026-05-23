@@ -1,12 +1,13 @@
 package com.jokerdev.katai.ui.components
 
-import androidx.compose.foundation.background
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -14,8 +15,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Description
-import androidx.compose.material3.AssistChip
-import androidx.compose.material3.AssistChipDefaults
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -33,55 +33,44 @@ fun AttachedPdfSection(
     onPdfClick: (String) -> Unit,
     onAddPdfClick: () -> Unit
 ) {
-
     Surface(
         modifier = Modifier.fillMaxWidth(),
         color = MaterialTheme.colorScheme.background
     ) {
-
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .horizontalScroll(rememberScrollState())
-                .padding(
-                    horizontal = 16.dp,
-                    vertical = 12.dp
-                ),
-
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-
             pdfs.forEach { pdf ->
-
                 Surface(
-                    onClick = {
-                        onPdfClick(pdf)
-                    },
-                    shape = RoundedCornerShape(18.dp),
-                    color = MaterialTheme.colorScheme.surfaceVariant,
-                    tonalElevation = 2.dp
+                    onClick = { onPdfClick(pdf) },
+                    shape = RoundedCornerShape(16.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
+                    border = BorderStroke(
+                        width = 1.dp,
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
+                    ),
+                    tonalElevation = 1.dp
                 ) {
-
                     Row(
-                        modifier = Modifier
-                            .padding(
-                                horizontal = 14.dp,
-                                vertical = 10.dp
-                            ),
-
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-
                         Surface(
                             shape = CircleShape,
-                            color = MaterialTheme.colorScheme.primaryContainer
+                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+                            modifier = Modifier.size(32.dp)
                         ) {
-
                             Icon(
                                 imageVector = Icons.Outlined.Description,
                                 contentDescription = null,
-                                modifier = Modifier.padding(6.dp),
+                                modifier = Modifier
+                                    .padding(6.dp)
+                                    .size(18.dp),
                                 tint = MaterialTheme.colorScheme.primary
                             )
                         }
@@ -92,37 +81,53 @@ fun AttachedPdfSection(
                             text = pdf,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
-                            style = MaterialTheme.typography.labelLarge,
-                            fontWeight = FontWeight.Medium
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.width(130.dp)
+                        )
+
+                        Spacer(modifier = Modifier.width(8.dp))
+
+                        Icon(
+                            imageVector = Icons.Outlined.Info,
+                            contentDescription = "View Extracted Text",
+                            modifier = Modifier.size(16.dp),
+                            tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
                         )
                     }
                 }
             }
 
-            AssistChip(
+            Surface(
                 onClick = onAddPdfClick,
-
-                label = {
-                    Text(
-                        text = "Add PDF",
-                        fontWeight = FontWeight.Medium
-                    )
-                },
-
-                leadingIcon = {
+                shape = RoundedCornerShape(16.dp),
+                color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.9f),
+                border = BorderStroke(
+                    width = 1.dp,
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+                ),
+                tonalElevation = 2.dp
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Icon(
                         imageVector = Icons.Outlined.Add,
-                        contentDescription = null
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp),
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer
                     )
-                },
-
-                shape = RoundedCornerShape(18.dp),
-
-                colors = AssistChipDefaults.assistChipColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    labelColor = MaterialTheme.colorScheme.primary
-                )
-            )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = if (pdfs.isEmpty()) "Attach PDF" else "Replace PDF",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                }
+            }
         }
     }
 }
