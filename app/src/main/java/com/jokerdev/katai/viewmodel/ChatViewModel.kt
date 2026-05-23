@@ -9,12 +9,13 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import androidx.lifecycle.viewModelScope
+import com.jokerdev.katai.data.remote.ChatRepository
 import com.jokerdev.katai.data.repository.PdfRepository
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class ChatViewModel: ViewModel() {
 
+    private val chatRepository = ChatRepository()
     private val pdfRepository = PdfRepository()
     private val _uiState = MutableStateFlow(ChatUiState())
     val uiState: StateFlow<ChatUiState> = _uiState.asStateFlow()
@@ -51,22 +52,43 @@ class ChatViewModel: ViewModel() {
             )
 
         viewModelScope.launch {
-            delay(1500)
+            try {
 
-            val botMessage = ChatMessage(
-                id = System.currentTimeMillis().toInt(),
-                text = "This is a fake AI response for: $messageText",
-                isUser = false
-            )
+                val aiResponse =
+                    chatRepository.generateResponse(
+                        question = messageText,
+                        pdfText = _uiState.value.extractedPdfText
+                    )
 
-            val finalMessages =
-                _uiState.value.messages + botMessage
-
-            _uiState.value =
-                _uiState.value.copy(
-                    messages = finalMessages,
-                    isLoading = false
+                val botMessage = ChatMessage(
+                    id = System.currentTimeMillis().toInt(),
+                    text = aiResponse,
+                    isUser = false
                 )
+
+                val finalMessages =
+                    _uiState.value.messages + botMessage
+
+                _uiState.value =
+                    _uiState.value.copy(
+                        messages = finalMessages,
+                        isLoading = false
+                    )
+
+            } catch (e: Exception) {
+
+                val errorMessage = ChatMessage(
+                    id = System.currentTimeMillis().toInt(),
+                    text = e.message ?: "Something went wrong",
+                    isUser = false
+                )
+
+                _uiState.value =
+                    _uiState.value.copy(
+                        messages = _uiState.value.messages + errorMessage,
+                        isLoading = false
+                    )
+            }
         }
     }
 
