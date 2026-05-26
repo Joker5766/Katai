@@ -62,6 +62,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.jokerdev.katai.ui.components.SettingsTopBar
 import com.jokerdev.katai.viewmodel.SettingsViewModel
 
 //Data
@@ -70,7 +71,7 @@ private data class ThemeOption(val id: String, val displayName: String)
 private data class LanguageOption(val code: String, val displayName: String)
 
 private val themeOptions = listOf(
-    ThemeOption("system", "Follow System"),
+    ThemeOption("system", "System"),
     ThemeOption("light",  "Light"),
     ThemeOption("dark",   "Dark"),
 )
@@ -172,71 +173,6 @@ fun SettingsScreen(
 }
 
 
-@Composable
-private fun SettingsTopBar(onBack: () -> Unit) {
-    Surface(
-        tonalElevation = 1.dp,
-        shadowElevation = 4.dp,
-        color = MaterialTheme.colorScheme.background,
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .statusBarsPadding()
-                .padding(horizontal = 8.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(onClick = onBack) {
-                Icon(
-                    imageVector = Icons.Outlined.ArrowBack,
-                    contentDescription = "Back",
-                    tint = MaterialTheme.colorScheme.onBackground
-                )
-            }
-
-            Spacer(modifier = Modifier.width(4.dp))
-
-            Box(
-                modifier = Modifier
-                    .size(36.dp)
-                    .background(
-                        brush = Brush.linearGradient(
-                            colors = listOf(
-                                MaterialTheme.colorScheme.primary,
-                                MaterialTheme.colorScheme.primaryContainer
-                            )
-                        ),
-                        shape = CircleShape
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Outlined.Settings,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onPrimary,
-                    modifier = Modifier.size(20.dp)
-                )
-            }
-
-            Spacer(modifier = Modifier.width(12.dp))
-
-            Column {
-                Text(
-                    text = "Settings",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-                Text(
-                    text = "Customise Katai",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
-                )
-            }
-        }
-    }
-}
 
 
 @Composable

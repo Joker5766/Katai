@@ -2,6 +2,7 @@ package com.jokerdev.katai.ui.screens
 
 import android.provider.OpenableColumns
 import android.widget.Toast
+import androidx.compose.material.icons.outlined.Edit
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
@@ -17,6 +18,7 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -87,6 +89,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -94,6 +97,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.jokerdev.katai.R
 import com.jokerdev.katai.ui.components.AttachedPdfSection
 import com.jokerdev.katai.ui.components.ChatTopBar
 import com.jokerdev.katai.ui.components.MessageBubble
@@ -115,6 +119,8 @@ fun ChatScreen(
     var showTextPreviewDialog by remember { mutableStateOf(false) }
     var showClearChatDialog by remember { mutableStateOf(false) }
     var sessionToDelete by remember { mutableStateOf<String?>(null) }
+    var sessionToRename by remember { mutableStateOf<String?>(null) }
+    var renameText by remember { mutableStateOf("") }
 
     val pdfPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -250,6 +256,23 @@ fun ChatScreen(
                                         overflow = TextOverflow.Ellipsis,
                                         modifier = Modifier.weight(1f)
                                     )
+
+                                    IconButton(
+                                        onClick = {
+                                            sessionToRename = session.id
+                                            renameText = session.title
+                                        },
+                                        modifier = Modifier.size(24.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Outlined.Edit,
+                                            contentDescription = "Rename Conversation",
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                    }
+
+                                    Spacer(modifier = Modifier.width(4.dp))
 
                                     IconButton(
                                         onClick = {
@@ -475,6 +498,60 @@ fun ChatScreen(
                 }
             }
         }
+    }
+    sessionToRename?.let { targetId ->
+
+        AlertDialog(
+            onDismissRequest = {
+                sessionToRename = null
+            },
+
+            title = {
+                Text(
+                    text = "Rename Chat",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+            },
+
+            text = {
+                OutlinedTextField(
+                    value = renameText,
+                    onValueChange = {
+                        renameText = it
+                    },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.renameSession(
+                            targetId,
+                            renameText
+                        )
+                        sessionToRename = null
+                    }
+                ) {
+                    Text("Save")
+                }
+            },
+
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        sessionToRename = null
+                    }
+                ) {
+                    Text("Cancel")
+                }
+            },
+
+            shape = RoundedCornerShape(20.dp),
+            containerColor = MaterialTheme.colorScheme.surface
+        )
     }
 
     //Confirm clear chat dialog
@@ -719,11 +796,10 @@ private fun EmptyState(
                     .background(color = MaterialTheme.colorScheme.primaryContainer, shape = CircleShape),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    imageVector = Icons.Rounded.AutoAwesome,
+                Image(
+                    painter = painterResource(id = R.drawable.karai_logo),
                     contentDescription = null,
-                    modifier = Modifier.size(38.dp),
-                    tint = MaterialTheme.colorScheme.onPrimaryContainer
+                    modifier = Modifier.size(44.dp)
                 )
             }
         }

@@ -2,6 +2,7 @@ package com.jokerdev.katai
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.AnimatedContent
@@ -67,6 +68,11 @@ class MainActivity : ComponentActivity() {
                         label = "screen_transition"
                     ) { isSettings ->
                         if (isSettings) {
+
+                            BackHandler {
+                                showSettings = false
+                            }
+
                             SettingsScreen(
                                 onBack = { showSettings = false }
                             )

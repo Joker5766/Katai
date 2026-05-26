@@ -32,20 +32,43 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
         loadSavedSessions()
     }
 
+    fun renameSession(
+        sessionId: String,
+        newTitle: String
+    ) {
+
+        if (newTitle.isBlank()) return
+
+
+        val updatedSessions = _uiState.value.sessions.map {
+            if (it.id == sessionId) {
+                it.copy(title = newTitle.trim())
+            } else it
+        }
+
+        _uiState.value = _uiState.value.copy(
+            sessions = updatedSessions
+        )
+
+        syncCurrentSessionState()
+        saveSessions()
+    }
     private fun loadSavedSessions() {
         viewModelScope.launch {
+
             val savedSessions = ChatStorage.loadChats(getApplication())
-            if (savedSessions.isEmpty()) {
-                
-                createNewSession()
-            } else {
-                val activeSessionId = savedSessions.first().id
-                _uiState.value = _uiState.value.copy(
-                    sessions = savedSessions,
-                    currentSessionId = activeSessionId
-                )
-                syncCurrentSessionState()
-            }
+
+            val temporarySession = ChatSession(
+                id = UUID.randomUUID().toString(),
+                title = "New Chat"
+            )
+
+            _uiState.value = _uiState.value.copy(
+                sessions = savedSessions + temporarySession,
+                currentSessionId = temporarySession.id
+            )
+
+            syncCurrentSessionState()
         }
     }
 
@@ -66,7 +89,6 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
             currentSessionId = newSessionId
         )
         syncCurrentSessionState()
-        saveSessions()
     }
 
     fun selectSession(sessionId: String) {
@@ -152,6 +174,12 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
         )
 
         val activeId = _uiState.value.currentSessionId
+        val currentSession =
+            _uiState.value.sessions.find { it.id == activeId }
+
+        val shouldPersistSession =
+            currentSession?.messages?.isEmpty() == true
+
         val updatedSessions = _uiState.value.sessions.map {
             if (it.id == activeId) {
                 val newTitle = if (it.title == "New Chat" && it.messages.isEmpty()) {

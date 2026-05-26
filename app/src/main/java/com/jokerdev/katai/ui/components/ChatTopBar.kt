@@ -1,5 +1,6 @@
 package com.jokerdev.katai.ui.components
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -32,8 +33,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.jokerdev.katai.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -76,11 +79,10 @@ fun ChatTopBar(
                             modifier = Modifier.padding(6.dp),
                             horizontalArrangement = Arrangement.Center
                         ) {
-                            Icon(
-                                imageVector = Icons.Outlined.AutoAwesome,
+                            Image(
+                                painter = painterResource(id = R.drawable.karai_logo),
                                 contentDescription = null,
-                                modifier = Modifier.size(24.dp),
-                                tint = MaterialTheme.colorScheme.onPrimaryContainer
+                                modifier = Modifier.size(24.dp)
                             )
                         }
                     }
