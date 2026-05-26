@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.asStateFlow
 
 data class SettingsUiState(
     val selectedModel: String = "llama-3.1-8b-instant",
-    val darkThemeMode: String = "system",   // "system", "dark", "light"
+    val darkThemeMode: String = "system",
     val typingAnimation: Boolean = true,
     val responseLanguage: String = "English"
 )

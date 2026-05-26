@@ -54,7 +54,7 @@ object MarkdownParser {
                     )
                 }
 
-                // 3. Inline Style Scanner (Bold, Italic, Code Spans)
+                // 3. Inline Style Scanner
                 var scanIdx = 0
                 while (scanIdx < currentLine.length) {
                     if (currentLine.startsWith("**", scanIdx)) {
@@ -98,7 +98,7 @@ object MarkdownParser {
                 }
 
                 if (isHeader) {
-                    pop() // Pop Header Style
+                    pop()
                 }
 
                 if (lineIdx < lines.size - 1) {

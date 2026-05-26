@@ -54,6 +54,9 @@ import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.QuestionAnswer
 import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
@@ -67,6 +70,7 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -109,6 +113,8 @@ fun ChatScreen(
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
 
     var showTextPreviewDialog by remember { mutableStateOf(false) }
+    var showClearChatDialog by remember { mutableStateOf(false) }
+    var sessionToDelete by remember { mutableStateOf<String?>(null) }
 
     val pdfPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -247,7 +253,7 @@ fun ChatScreen(
 
                                     IconButton(
                                         onClick = {
-                                            viewModel.deleteSession(session.id)
+                                            sessionToDelete = session.id
                                         },
                                         modifier = Modifier.size(24.dp)
                                     ) {
@@ -277,8 +283,7 @@ fun ChatScreen(
                         }
                     },
                     onDeleteChat = {
-                        viewModel.clearCurrentSession()
-                        Toast.makeText(context, "Chat cleared", Toast.LENGTH_SHORT).show()
+                        showClearChatDialog = true
                     },
                     onSettingsClick = onSettingsClick
                 )
@@ -309,7 +314,6 @@ fun ChatScreen(
                         color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
                     )
 
-                    // Message list or empty state
                     Box(
                         modifier = Modifier
                             .weight(1f)
@@ -330,7 +334,7 @@ fun ChatScreen(
                                     start = 16.dp,
                                     end = 16.dp,
                                     top = 16.dp,
-                                    bottom = 96.dp
+                                    bottom = 148.dp
                                 ),
                                 verticalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
@@ -352,7 +356,7 @@ fun ChatScreen(
                             exit = fadeOut() + scaleOut(),
                             modifier = Modifier
                                 .align(Alignment.BottomEnd)
-                                .padding(end = 16.dp, bottom = 96.dp)
+                                .padding(end = 16.dp, bottom = 140.dp)
                         ) {
                             FloatingActionButton(
                                 onClick = {
@@ -471,6 +475,103 @@ fun ChatScreen(
                 }
             }
         }
+    }
+
+    //Confirm clear chat dialog
+    if (showClearChatDialog) {
+        AlertDialog(
+            onDismissRequest = { showClearChatDialog = false },
+            icon = {
+                Icon(
+                    imageVector = Icons.Outlined.DeleteOutline,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.error
+                )
+            },
+            title = {
+                Text(
+                    text = "Clear Chat?",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Text(
+                    text = "This will permanently remove all messages in the current chat. This action cannot be undone.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showClearChatDialog = false
+                        viewModel.clearCurrentSession()
+                        Toast.makeText(context, "Chat cleared", Toast.LENGTH_SHORT).show()
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Text("Clear", fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showClearChatDialog = false }) {
+                    Text("Cancel")
+                }
+            },
+            containerColor = MaterialTheme.colorScheme.surface,
+            shape = RoundedCornerShape(20.dp)
+        )
+    }
+
+    //Confirm delete conversation dialog
+    sessionToDelete?.let { targetId ->
+        AlertDialog(
+            onDismissRequest = { sessionToDelete = null },
+            icon = {
+                Icon(
+                    imageVector = Icons.Outlined.DeleteOutline,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.error
+                )
+            },
+            title = {
+                Text(
+                    text = "Delete Conversation?",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Text(
+                    text = "This conversation and all its messages will be permanently deleted.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.deleteSession(targetId)
+                        sessionToDelete = null
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Text("Delete", fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { sessionToDelete = null }) {
+                    Text("Cancel")
+                }
+            },
+            containerColor = MaterialTheme.colorScheme.surface,
+            shape = RoundedCornerShape(20.dp)
+        )
     }
 
     // PDF Content Viewer Dialog Sheet

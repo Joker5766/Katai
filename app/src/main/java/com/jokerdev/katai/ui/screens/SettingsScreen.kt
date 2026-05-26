@@ -35,10 +35,8 @@ import androidx.compose.material.icons.outlined.DarkMode
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.KeyboardArrowDown
 import androidx.compose.material.icons.outlined.Language
-import androidx.compose.material.icons.outlined.Memory
 import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material.icons.outlined.Settings
-import androidx.compose.material.icons.outlined.SmartToy
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -66,18 +64,10 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.jokerdev.katai.viewmodel.SettingsViewModel
 
-// ─── Data ───────────────────────────────────────────────────────────────────
+//Data
 
-private data class ModelOption(val id: String, val displayName: String, val description: String)
 private data class ThemeOption(val id: String, val displayName: String)
 private data class LanguageOption(val code: String, val displayName: String)
-
-private val availableModels = listOf(
-    ModelOption("llama-3.1-8b-instant",   "Llama 3.1 8B",      "Fast & lightweight – great for quick answers"),
-    ModelOption("llama-3.3-70b-versatile","Llama 3.3 70B",     "Powerful – best accuracy for complex PDFs"),
-    ModelOption("mixtral-8x7b-32768",     "Mixtral 8×7B",      "Long-context specialist, 32 k token window"),
-    ModelOption("gemma2-9b-it",           "Gemma 2 9B",        "Google's efficient open model"),
-)
 
 private val themeOptions = listOf(
     ThemeOption("system", "Follow System"),
@@ -97,7 +87,7 @@ private val languageOptions = listOf(
     LanguageOption("Japanese",   "Japanese"),
 )
 
-// ─── Screen ─────────────────────────────────────────────────────────────────
+//Screen
 
 @Composable
 fun SettingsScreen(
@@ -111,10 +101,8 @@ fun SettingsScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
-        // ── Top bar ──────────────────────────────────────────────────────────
         SettingsTopBar(onBack = onBack)
 
-        // ── Scrollable content ───────────────────────────────────────────────
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -123,19 +111,8 @@ fun SettingsScreen(
                 .padding(horizontal = 20.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
-            // AI Model
-            SettingsSection(
-                title = "AI Model",
-                icon = Icons.Outlined.SmartToy
-            ) {
-                ModelPickerGroup(
-                    models = availableModels,
-                    selected = state.selectedModel,
-                    onSelect = viewModel::setModel
-                )
-            }
 
-            // Appearance
+
             SettingsSection(
                 title = "Appearance",
                 icon = Icons.Outlined.Palette
@@ -150,7 +127,6 @@ fun SettingsScreen(
                 )
             }
 
-            // Behaviour
             SettingsSection(
                 title = "Behaviour",
                 icon = Icons.Outlined.Settings
@@ -177,7 +153,6 @@ fun SettingsScreen(
                 )
             }
 
-            // About
             SettingsSection(
                 title = "About",
                 icon = Icons.Outlined.Info
@@ -196,7 +171,6 @@ fun SettingsScreen(
     }
 }
 
-// ─── Top bar ─────────────────────────────────────────────────────────────────
 
 @Composable
 private fun SettingsTopBar(onBack: () -> Unit) {
@@ -223,7 +197,6 @@ private fun SettingsTopBar(onBack: () -> Unit) {
 
             Spacer(modifier = Modifier.width(4.dp))
 
-            // Gradient icon badge
             Box(
                 modifier = Modifier
                     .size(36.dp)
@@ -265,7 +238,6 @@ private fun SettingsTopBar(onBack: () -> Unit) {
     }
 }
 
-// ─── Section wrapper ─────────────────────────────────────────────────────────
 
 @Composable
 private fun SettingsSection(
@@ -308,105 +280,8 @@ private fun SettingsSection(
     }
 }
 
-// ─── Model picker ─────────────────────────────────────────────────────────────
 
-@Composable
-private fun ModelPickerGroup(
-    models: List<ModelOption>,
-    selected: String,
-    onSelect: (String) -> Unit
-) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        models.forEachIndexed { index, model ->
-            val isSelected = model.id == selected
-            val borderColor = if (isSelected)
-                MaterialTheme.colorScheme.primary
-            else
-                MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
-            val bgColor = if (isSelected)
-                MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)
-            else
-                Color.Transparent
 
-            Surface(
-                shape = RoundedCornerShape(12.dp),
-                color = bgColor,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .border(
-                        width = if (isSelected) 1.5.dp else 1.dp,
-                        color = borderColor,
-                        shape = RoundedCornerShape(12.dp)
-                    )
-                    .clickable { onSelect(model.id) }
-            ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(34.dp)
-                            .background(
-                                color = if (isSelected)
-                                    MaterialTheme.colorScheme.primaryContainer
-                                else
-                                    MaterialTheme.colorScheme.surfaceVariant,
-                                shape = CircleShape
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Outlined.Memory,
-                            contentDescription = null,
-                            tint = if (isSelected)
-                                MaterialTheme.colorScheme.primary
-                            else
-                                MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(16.dp)
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.width(12.dp))
-
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = model.displayName,
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                            color = if (isSelected)
-                                MaterialTheme.colorScheme.primary
-                            else
-                                MaterialTheme.colorScheme.onSurface
-                        )
-                        Text(
-                            text = model.description,
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
-
-                    if (isSelected) {
-                        Icon(
-                            imageVector = Icons.Outlined.Check,
-                            contentDescription = "Selected",
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
-                }
-            }
-
-            if (index < models.lastIndex) {
-                Spacer(modifier = Modifier.height(0.dp)) // already spaced by Column
-            }
-        }
-    }
-}
-
-// ─── Segmented picker row ────────────────────────────────────────────────────
 
 @Composable
 private fun SegmentedPickerRow(
@@ -474,7 +349,6 @@ private fun SegmentedPickerRow(
     }
 }
 
-// ─── Switch row ──────────────────────────────────────────────────────────────
 
 @Composable
 private fun SwitchRow(
@@ -534,7 +408,6 @@ private fun SwitchRow(
     }
 }
 
-// ─── Dropdown picker row ─────────────────────────────────────────────────────
 
 @Composable
 private fun DropdownPickerRow(
@@ -552,7 +425,7 @@ private fun DropdownPickerRow(
     )
 
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        // Header row
+
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -663,7 +536,6 @@ private fun DropdownPickerRow(
     }
 }
 
-// ─── About row ───────────────────────────────────────────────────────────────
 
 @Composable
 private fun AboutRow(label: String, value: String) {

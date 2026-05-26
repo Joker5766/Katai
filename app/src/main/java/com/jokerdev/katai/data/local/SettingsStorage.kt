@@ -7,7 +7,7 @@ object SettingsStorage {
 
     private const val PREFS_NAME = "katai_settings"
     private const val KEY_MODEL = "selected_model"
-    private const val KEY_DARK_THEME = "dark_theme_mode" // "system", "dark", "light"
+    private const val KEY_DARK_THEME = "dark_theme_mode"
     private const val KEY_TYPING_ANIMATION = "typing_animation"
     private const val KEY_RESPONSE_LANGUAGE = "response_language"
 

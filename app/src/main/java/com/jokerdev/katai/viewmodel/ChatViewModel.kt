@@ -6,11 +6,15 @@ import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.jokerdev.katai.data.local.ChatStorage
+import com.jokerdev.katai.data.local.SettingsStorage
 import com.jokerdev.katai.data.model.ChatMessage
 import com.jokerdev.katai.data.model.ChatSession
 import com.jokerdev.katai.data.model.ChatUiState
 import com.jokerdev.katai.data.remote.ChatRepository
 import com.jokerdev.katai.data.repository.PdfRepository
+import android.widget.Toast
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -89,7 +93,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
         )
 
         if (remainingSessions.isEmpty()) {
-            createNewSession() // Ensure there is always at least one active chat session
+            createNewSession()
         } else {
             syncCurrentSessionState()
             saveSessions()
@@ -137,6 +141,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun sendMessage() {
+        if (_uiState.value.isLoading) return
         val messageText = _uiState.value.currentMessage.trim()
         if (messageText.isEmpty()) return
 
@@ -146,7 +151,6 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
             isUser = true
         )
 
-        // Append user message to active session
         val activeId = _uiState.value.currentSessionId
         val updatedSessions = _uiState.value.sessions.map {
             if (it.id == activeId) {
@@ -172,63 +176,86 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
 
         viewModelScope.launch {
             try {
+                val responseLanguage = SettingsStorage.getResponseLanguage(getApplication())
+                val isTypingAnimationEnabled = SettingsStorage.getTypingAnimation(getApplication())
+
+                if (!com.jokerdev.katai.utils.NetworkUtils.isNetworkAvailable(getApplication())) {
+                    throw java.io.IOException("No internet connection. Please check your network and try again.")
+                }
+
                 val aiResponse = chatRepository.generateResponse(
                     question = messageText,
-                    pdfText = _uiState.value.extractedPdfText
+                    pdfText = _uiState.value.extractedPdfText,
+                    history = _uiState.value.messages,
+                    language = responseLanguage
                 )
 
                 val botMessageId = System.currentTimeMillis().toInt()
                 val initialBotMessage = ChatMessage(
                     id = botMessageId,
-                    text = "",
+                    text = if (isTypingAnimationEnabled) "" else aiResponse,
                     isUser = false
                 )
 
-                val withEmptyBotMessageSessions = _uiState.value.sessions.map {
+                val withBotMessageSessions = _uiState.value.sessions.map {
                     if (it.id == activeId) {
                         it.copy(messages = it.messages + initialBotMessage)
                     } else it
                 }
 
                 _uiState.value = _uiState.value.copy(
-                    sessions = withEmptyBotMessageSessions,
+                    sessions = withBotMessageSessions,
                     isLoading = false
                 )
                 syncCurrentSessionState()
 
-                val delayTime = when {
-                    aiResponse.length > 1000 -> 2L
-                    aiResponse.length > 500 -> 6L
-                    else -> 12L
-                }
-
-                var typedText = ""
-                for (char in aiResponse) {
-                    typedText += char
-                    
-                    val typingSessions = _uiState.value.sessions.map { session ->
-                        if (session.id == activeId) {
-                            session.copy(
-                                messages = session.messages.map { msg ->
-                                    if (msg.id == botMessageId) msg.copy(text = typedText) else msg
-                                }
-                            )
-                        } else session
+                if (isTypingAnimationEnabled) {
+                    val delayTime = when {
+                        aiResponse.length > 1000 -> 2L
+                        aiResponse.length > 500 -> 6L
+                        else -> 12L
                     }
 
-                    _uiState.value = _uiState.value.copy(
-                        sessions = typingSessions
-                    )
-                    syncCurrentSessionState()
-                    kotlinx.coroutines.delay(delayTime)
+                    var typedText = ""
+                    for (char in aiResponse) {
+                        typedText += char
+                        
+                        val typingSessions = _uiState.value.sessions.map { session ->
+                            if (session.id == activeId) {
+                                session.copy(
+                                    messages = session.messages.map { msg ->
+                                        if (msg.id == botMessageId) msg.copy(text = typedText) else msg
+                                    }
+                                )
+                            } else session
+                        }
+
+                        _uiState.value = _uiState.value.copy(
+                            sessions = typingSessions
+                        )
+                        syncCurrentSessionState()
+                        kotlinx.coroutines.delay(delayTime)
+                    }
                 }
 
                 saveSessions()
 
             } catch (e: Exception) {
+                val userFriendlyError = when {
+                    e is java.net.UnknownHostException || e.message?.contains("No internet connection") == true || e is java.io.IOException ->
+                        "No internet connection. Please check your network and try again."
+                    e.message?.contains("401") == true ->
+                        "Unauthorized: Invalid Groq API key configuration. Please contact the developer."
+                    e.message?.contains("429") == true ->
+                        "Rate limit exceeded. Please wait a moment and try again."
+                    e.message?.contains("503") == true ->
+                        "Groq API service is currently unavailable. Please try again later."
+                    else -> e.localizedMessage ?: "Something went wrong"
+                }
+
                 val errorMessage = ChatMessage(
                     id = System.currentTimeMillis().toInt(),
-                    text = e.message ?: "Something went wrong",
+                    text = userFriendlyError,
                     isUser = false
                 )
 
@@ -258,35 +285,58 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
         )
 
         viewModelScope.launch {
-            val extractedText = pdfRepository.extractTextFromPdf(
-                context = context,
-                pdfUri = pdfUri
-            )
+            try {
+                val extractedText = pdfRepository.extractTextFromPdf(
+                    context = context,
+                    pdfUri = pdfUri
+                )
 
-            val activeId = _uiState.value.currentSessionId
-            val updatedSessions = _uiState.value.sessions.map {
-                if (it.id == activeId) {
-                    val newTitle = if (it.title == "New Chat") {
-                        val cleanedName = pdfName.replace(".pdf", "", ignoreCase = true)
-                        if (cleanedName.length > 22) cleanedName.take(20) + "..." else cleanedName
-                    } else {
-                        it.title
-                    }
-                    it.copy(
-                        title = newTitle,
-                        selectedPdfName = pdfName,
-                        selectedPdfUriString = pdfUri.toString(),
-                        extractedPdfText = extractedText
-                    )
-                } else it
+                if (extractedText.isBlank()) {
+                    throw Exception("The PDF contains no readable text. It might be scanned, encrypted, or empty.")
+                }
+
+                val activeId = _uiState.value.currentSessionId
+                val updatedSessions = _uiState.value.sessions.map {
+                    if (it.id == activeId) {
+                        val newTitle = if (it.title == "New Chat") {
+                            val cleanedName = pdfName.replace(".pdf", "", ignoreCase = true)
+                            if (cleanedName.length > 22) cleanedName.take(20) + "..." else cleanedName
+                        } else {
+                            it.title
+                        }
+                        it.copy(
+                            title = newTitle,
+                            selectedPdfName = pdfName,
+                            selectedPdfUriString = pdfUri.toString(),
+                            extractedPdfText = extractedText
+                        )
+                    } else it
+                }
+
+                _uiState.value = _uiState.value.copy(
+                    sessions = updatedSessions,
+                    isLoading = false
+                )
+                syncCurrentSessionState()
+                saveSessions()
+
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(context, "PDF successfully attached!", Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false
+                )
+                syncCurrentSessionState()
+                
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(
+                        context,
+                        "Failed to load PDF: ${e.localizedMessage ?: "Unsupported file format"}",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
             }
-
-            _uiState.value = _uiState.value.copy(
-                sessions = updatedSessions,
-                isLoading = false
-            )
-            syncCurrentSessionState()
-            saveSessions()
         }
     }
 }
